@@ -5,11 +5,14 @@ INCLUDE_DIR = include/
 
 OUTFILE = casino
 
-COMPILE_FLAGS = -lncurses -std=c++14 -Wall -Wextra
+COMPILE_FLAGS = -lncurses -std=c++14 -Wall -Wextra -O2 -pedantic
 
 # -------------------------------------------------
 
 all: bin compile build
+
+run: all
+	./$(OUTFILE)
 
 bin:
 	mkdir bin

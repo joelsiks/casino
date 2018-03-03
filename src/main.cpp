@@ -1,4 +1,5 @@
 
+#include "dice.h"
 #include "roulette.h"
 #include "slots.h"
 #include "game.h"
@@ -15,6 +16,7 @@ int main(int argc, char** argv) {
 
 	Slots sl(game);
 	Roulette rl(game);
+	Dice dice(game);
 
 	initscr();
 	start_color();
@@ -42,6 +44,7 @@ int main(int argc, char** argv) {
 			if(command == "q" || command == "quit" || command == "exit") running = false;
 			else if(command == "r" || command == "roulette") rl.start_game();
 			else if(command == "s" || command == "slots") sl.start_game();
+			else if(command == "d" || command == "dice") dice.start_game();
 			else if(command == "bal") game.setBalance();
 			else if(command == "clear") {
 				UI::clear_middle(&gdata); // Clear the middle input.

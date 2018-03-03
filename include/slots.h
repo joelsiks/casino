@@ -18,6 +18,8 @@ private:
 	void print();
 	void shuffle_one(int);
 
+	static const int WIN_MULTIPLIER = 3;
+
 public:
 	Slots(const Game &g);
 	void start_game();

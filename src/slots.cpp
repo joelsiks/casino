@@ -44,22 +44,21 @@ void Slots::print() {
 
 	for(int i = 0; i < 3; i++) {
 		for(int j = 0; j < 3; j++) {
+
+			int pair_code;
+
 			if(m_slots[tempIndex] == "XXX") {
-				attron(COLOR_PAIR(4));
-				mvprintw(holder_y + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				mvprintw(holder_y+1 + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				attroff(COLOR_PAIR(4));
+				pair_code = 4;
 			} else if(m_slots[tempIndex] == "YYY") {
-				attron(COLOR_PAIR(2));
-				mvprintw(holder_y + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				mvprintw(holder_y+1 + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				attroff(COLOR_PAIR(2));
+				pair_code = 2;
 			} else if(m_slots[tempIndex] == "ZZZ") {
-				attron(COLOR_PAIR(3));
-				mvprintw(holder_y + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				mvprintw(holder_y+1 + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
-				attroff(COLOR_PAIR(3));
+				pair_code = 3;
 			}
+
+			attron(COLOR_PAIR(pair_code));
+			mvprintw(holder_y + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
+			mvprintw(holder_y+1 + tempIncrement_y, holder_x + tempIncrement_x, m_slots[tempIndex].c_str());
+			attroff(COLOR_PAIR(pair_code));
 
 			tempIncrement_x += 11;
 			tempIndex += 1;
@@ -92,12 +91,13 @@ void Slots::spin() {
 
 	std::random_device rd;
 	std::mt19937 rnd(rd());
-	std::uniform_int_distribution<int> random_int(55, 85);
-	std::uniform_int_distribution<int> random_small_int(1, 8);
 
-	int randomBase = random_int(rnd);
-	int randomSmallBaseOne = random_small_int(rnd);
-	int randomSmallBaseTwo = random_small_int(rnd);
+	std::uniform_int_distribution<int> random_high_int(55, 85);
+	std::uniform_int_distribution<int> random_low_int(1, 8);
+
+	int randomBase = random_high_int(rnd);
+	int randomSmallBaseOne = random_low_int(rnd);
+	int randomSmallBaseTwo = random_low_int(rnd);
 
 	for(int i = 0; i < randomBase; i++) {
 		usleep(100 * 1000);
@@ -110,7 +110,7 @@ void Slots::spin() {
 			shuffle_one(1);
 		}
 
-		if(i < randomBase-randomSmallBaseTwo) {
+		if(i < randomBase - randomSmallBaseTwo) {
 			shuffle_one(2);
 		}
 
@@ -152,7 +152,7 @@ void Slots::start_game() {
 	m_current_bet = amnt;
 
 	// Update the balance.
-    _pdata->setBalance(_pdata->getBalance()-amnt);
+    setBalance(_pdata->getBalance()-amnt);
 	UI::print_balance(_gdata, _pdata->getBalance());
 
 	UI::clear_command_input(_gdata);
@@ -167,28 +167,32 @@ void Slots::end_game() {
 
 	UI::clear_command_input(_gdata);
 
+	bool won = false;
+
 	if(m_slots[0] == m_slots[1] && m_slots[1] == m_slots[2]) {
-		_pdata->setBalance(_pdata->getBalance() + (m_current_bet * 3));
-		_pdata->incrementStreak();
-		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) + (_gdata->mX/2) / 10, "Three in a row! YOU WON!");
+		won = true;
 	} else if(m_slots[3] == m_slots[4] && m_slots[4] == m_slots[5]) {
-		_pdata->setBalance(_pdata->getBalance() + (m_current_bet * 3));
-		_pdata->incrementStreak();
-		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) + (_gdata->mX/2) / 10, "Three in a row! YOU WON!");
+		won = true;
 	} else if(m_slots[6] == m_slots[7] && m_slots[7] == m_slots[8]) {
-		_pdata->setBalance(_pdata->getBalance() + (m_current_bet * 3));
-		_pdata->incrementStreak();
-		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) + (_gdata->mX/2) / 10, "Three in a row! YOU WON!");
+		won = true;
+	} else if(m_slots[0] == m_slots[4] && m_slots[4] == m_slots[8]) {
+		won = true;
+	} else if(m_slots[2] == m_slots[4] && m_slots[4] == m_slots[6]) {
+		won = true;
 	} else {
 		_pdata->discardStreak();
 		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) + (_gdata->mX/2) / 10, "No win. Sorry.");
 	}
 
+	if(won) {
+		setBalance(_pdata->getBalance() + (m_current_bet * WIN_MULTIPLIER));
+		_pdata->incrementStreak();
+		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) + (_gdata->mX/2) / 10, "Threee in a row. YOU WON!");
+	}
+
 	// TODO: Add a respin/play again option with ENTER key.
-	UI::notification(_gdata, "WIN STREAK: " + std::to_string(_pdata->getStreak()));
 	UI::clear_middle(_gdata);
-	UI::print_balance(_gdata, _pdata->getBalance()); 
-	UI::clear_command_input(_gdata);
+	updateStreakCounter();
 
 	// Reset bet holder.
 	m_current_bet = 0;

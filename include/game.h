@@ -2,22 +2,25 @@
 
 #include <string>
 #include <stdexcept>
+#include <random>
 #include <curses.h>
 
-#ifndef _CASINO_KEYS
-#define _CASINO_KEYS
+// Function used to get the size of a static array.
+template<class T, size_t N>
+constexpr size_t length(T (&)[N]) { return N; }
 
 namespace Keys {
 	static short const ENTER = 10;
-	static short const RIGHT = 67;
-	static short const LEFT = 68;
 
-	static short const ONE = 49;
-	static short const TWO = 50;
+	static short const UP    = 65;
+	static short const DOWN  = 66;
+	static short const RIGHT = 67;
+	static short const LEFT  = 68;
+
+	static short const ONE   = 49;
+	static short const TWO   = 50;
 	static short const THREE = 51;
 }
-
-#endif
 
 typedef struct GameData {
 	std::string balance_str;
@@ -36,8 +39,11 @@ private:
 	int win;
 
 public:
-	PlayerData(int balance);
-	bool hasAmount(int amount);
+	PlayerData(int balance) : _balance(balance) {}
+
+	inline bool hasAmount(int amount) {
+		return _balance >= amount;
+	}
 
 	inline void incrementStreak() {
 		_streak++;
@@ -70,6 +76,8 @@ public:
 
 	void setBalance();
 
+	void updateStreakCounter();
+
 protected:
 	PlayerData *_pdata;
 	GameData *_gdata;
@@ -83,5 +91,6 @@ namespace UI {
 	void clear_middle(GameData *d);
 	void clear_notification(GameData *d);
 	void clear_game_end_status(GameData *d);
+	void clear_dice_board(GameData *d);
 	void notification(GameData *d, std::string str);
 }

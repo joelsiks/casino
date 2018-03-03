@@ -2,13 +2,7 @@
 #include "game.h"
 #include "roulette.h"
 
-static int calc_roulettepos(int maxlen, int slots_size) {
-	return (maxlen - (slots_size * 3)) / 2;
-}
-
-Roulette::Roulette(const Game &g) : Game(g) {}
-
-void Roulette::changeOption(int arr[]) {
+void Roulette::change_option(int arr[]) {
 	for(int i = 0; i < sizeof(*arr); i++) {
 		mvprintw(_gdata->mY-1, arr[i], " ");
 	}
@@ -20,64 +14,51 @@ void Roulette::changeOption(int arr[]) {
 void Roulette::spin(int nspins, int sec) {
 	for(int i = 0; i < nspins; i++) {
 		UI::clear_command_input(_gdata);
+
 		refresh();
 		usleep(sec * 1000);
+
+		// Shift the array values.
 		int tmp = m_slotList[0];
 		m_slotList.erase(m_slotList.begin());
 		m_slotList.push_back(tmp);
+
 		print();
 	}
 }
 
 void Roulette::init() {
-	int row_pos = (_gdata->mY/4) - 1;
-	int len = _gdata->mX;
-
 	m_slotList = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22};
 
-	m_row = row_pos;
-	m_square_max_length = len/2;
+	m_row = (_gdata->mY/4) - 1;
+	m_square_max_length = _gdata->mX/2;
 
 	print();
-	mvprintw(m_row+1, ((m_square_max_length - (m_slotList.size() * 3)) / 2) + (m_slotList.size() * 3) / 2, "^");
+	mvprintw(m_row+1, ((m_square_max_length - (m_slotList.size() * 3)) / 2) + (m_slotList.size() * 3) / 2 - 1, "^^");
 }
 
 void Roulette::print() {
 
-	int xpos = calc_roulettepos(m_square_max_length, m_slotList.size());
+	int xpos = (m_square_max_length - (m_slotList.size() * 3)) / 2;
 
 	init_pair(1, COLOR_WHITE, COLOR_BLACK);
 	init_pair(2, COLOR_WHITE, COLOR_RED);
 	init_pair(3, COLOR_WHITE, COLOR_GREEN);
 
 	for(int i = 0; i < m_slotList.size(); i++) {
-		if(m_slotList[i] < 10) {
-			if(m_slotList[i] % 2) {
-				attron(COLOR_PAIR(1));
-				mvprintw(m_row, xpos, "0%d", m_slotList[i]);
-				attroff(COLOR_PAIR(1));
-			} else {
-				attron(COLOR_PAIR(2));
-				mvprintw(m_row, xpos, "0%d", m_slotList[i]);
-				attroff(COLOR_PAIR(2));
-			} 
-		} else {
-			if(m_slotList[i] % 2) {
-				attron(COLOR_PAIR(1));
-				mvprintw(m_row, xpos, "%d", m_slotList[i]);
-				attroff(COLOR_PAIR(1));
-			} else {
-				attron(COLOR_PAIR(2));
-				mvprintw(m_row, xpos, "%d", m_slotList[i]);
-				attroff(COLOR_PAIR(2));
-			}
-		}
 
-		if(m_slotList[i] == 0) {
-			attron(COLOR_PAIR(3));
-			mvprintw(m_row, xpos, "0%d", m_slotList[i]);
-			attroff(COLOR_PAIR(3));
-		}
+		std::string number = "";
+		int pair_number;
+
+		if(m_slotList[i] == 0) pair_number = 3;
+		else pair_number = (m_slotList[i] % 2) ? 1 : 2;
+
+		if(m_slotList[i] < 10) number += "0";
+		number += std::to_string(m_slotList[i]);
+
+		attron(COLOR_PAIR(pair_number));
+		mvprintw(m_row, xpos, number.c_str());
+		attroff(COLOR_PAIR(pair_number));
 
 		xpos += 3;
 	}
@@ -88,7 +69,7 @@ void Roulette::start_game() {
 	// Initializing rng.
 	std::random_device rd;
 	std::mt19937 rnd(rd());
-	std::uniform_int_distribution<int> random_int(20, 40);
+	std::uniform_int_distribution<int> random_int(20, m_slotList.size());
 
 	int amnt;
 	char tmp_amnt[80];
@@ -116,7 +97,7 @@ void Roulette::start_game() {
 	}
 
 	// Update current balance and output it to screen.
-	_pdata->setBalance(_pdata->getBalance() - amnt);
+	setBalance(_pdata->getBalance() - amnt);
 	UI::print_balance(_gdata, _pdata->getBalance());
 
 	// Sets member variable for reference later.
@@ -140,27 +121,27 @@ void Roulette::start_game() {
 		switch(keyboard_value) {
 			case Keys::LEFT:
 				if(m_current_choice != 0) m_current_choice -= 1;
-				Roulette::changeOption(positions);
+				Roulette::change_option(positions);
 				break;
 
 			case Keys::RIGHT:
 				if(m_current_choice != 2) m_current_choice += 1;
-				Roulette::changeOption(positions);
+				Roulette::change_option(positions);
 				break;
 
 			case Keys::ONE:
 				m_current_choice = 0;
-				Roulette::changeOption(positions);
+				Roulette::change_option(positions);
 				break;
 
 			case Keys::TWO:
 				m_current_choice = 1;
-				Roulette::changeOption(positions);
+				Roulette::change_option(positions);
 				break;
 
 			case Keys::THREE:
 				m_current_choice = 2;
-				Roulette::changeOption(positions);
+				Roulette::change_option(positions);
 				break;
 
 			default:
@@ -172,52 +153,47 @@ void Roulette::start_game() {
 	// Clear the middle screen of the selection menu.
 	UI::clear_middle(_gdata);
 
+	// random_int returns an integer between 20-(size of slots array), giving all possibilities equal chance of occurring.
 	int spins = random_int(rnd);
 
-	// Hardcoded initial spins to fill out the game.
-	Roulette::spin(20, 90);
-	Roulette::spin(2, 180);
+	// Hardcoded fast spins.
+	Roulette::spin(15, 90);
+	Roulette::spin(7, 120);
+	Roulette::spin(5, 170);
 
 	for(int i = spins; i > 0; i--) {
-		if(i > 13)
-			Roulette::spin(1, 200);
-		else if(i > 10)
-			Roulette::spin(1, 240);
-		else if(i > 6)
-			Roulette::spin(1, 280);
-		else if(i > 4)
-			Roulette::spin(1, 320);
-		else 
-			Roulette::spin(1, 640);
+		if(i > 13)      Roulette::spin(1, 200);
+		else if(i > 10) Roulette::spin(1, 240);
+		else if(i > 6)  Roulette::spin(1, 280);
+		else if(i > 4)  Roulette::spin(1, 320);
+		else            Roulette::spin(1, 640);
 	}
 
-	Roulette::end_game(_pdata);
+	Roulette::end_game();
 }
 
-void Roulette::end_game(PlayerData *p) {
+void Roulette::end_game() {
 
 	UI::clear_command_input(_gdata);
 
 	if(m_slotList[11] % 2 && m_current_choice == 1) { // BLACK
-		p->setBalance(p->getBalance() + (m_current_bet * 2));
-		p->incrementStreak();
+		setBalance(_pdata->getBalance() + (m_current_bet * 2));
+		_pdata->incrementStreak();
 		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) / 10, "LANDED ON: %d - YOU WON!", m_slotList[11]);
 	} else if(!(m_slotList[11] % 2) && m_current_choice == 0) { // RED
-		p->setBalance(p->getBalance() + (m_current_bet * 2));
-		p->incrementStreak();
+		setBalance(_pdata->getBalance() + (m_current_bet * 2));
+		_pdata->incrementStreak();
 		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) / 10, "LANDED ON: %d - YOU WON!", m_slotList[11]);
 	} else if(m_slotList[11] == 0 && m_current_choice == 2) { // GREEN
-		p->setBalance(p->getBalance() + (m_current_bet * 8));
-		p->incrementStreak();
+		setBalance(_pdata->getBalance() + (m_current_bet * 8));
+		_pdata->incrementStreak();
 		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) / 10, "LANDED ON: %d - YOU WON!", m_slotList[11]);
 	} else {
-		p->discardStreak();
+		_pdata->discardStreak();
 		mvprintw((_gdata->mY/2)-3, (_gdata->mX/2) / 10, "LANDED ON: %d - You lost.", m_slotList[11]);
 	}
 
-	UI::notification(_gdata, "WIN STREAK: " + std::to_string(p->getStreak()));
-	UI::print_balance(_gdata, p->getBalance());
-	UI::clear_command_input(_gdata);
+	updateStreakCounter();
 
 	m_current_choice = 1;
 	m_current_bet = 0;

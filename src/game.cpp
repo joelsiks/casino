@@ -10,12 +10,12 @@ Game::Game(PlayerData *p, GameData *g) : _pdata(p), _gdata(g) {
 void Game::setBalance() {
 
 	int amnt;
-	int maxAmountOfCharacters = 5;
-	char tmp_amnt[maxAmountOfCharacters];
+	int maxCharacters = 5;
+	char tmp_amnt[maxCharacters];
 
 	UI::print_middle(_gdata, "AMOUNT: ");
 	
-	getnstr(tmp_amnt, maxAmountOfCharacters);
+	getnstr(tmp_amnt, maxCharacters);
 	std::string bet_amount(tmp_amnt);
 
 	try {
@@ -32,11 +32,10 @@ void Game::setBalance() {
 	UI::clear_middle(_gdata);
 }
 
-PlayerData::PlayerData(int balance) : _balance(balance) {
-}
-
-bool PlayerData::hasAmount(int value) {
-	return _balance >= value;
+void Game::updateStreakCounter() {
+	UI::notification(_gdata, "WIN STREAK: " + std::to_string(_pdata->getStreak()));
+	UI::print_balance(_gdata, _pdata->getBalance());
+	UI::clear_command_input(_gdata);
 }
 
 void UI::clear_game_end_status(GameData *d) {
@@ -51,7 +50,7 @@ void UI::clear_command_input(GameData *d) {
 	// Clear the input.
 	for(int pos = 0; pos < d->input_length; pos++) mvprintw(d->mY-1, d->command_str.size() + pos, " ");
 
-	// Move the cursor to accurate position.
+	// Move the cursor to starting position.
 	move(d->mY-1, d->command_str.size());
 }
 
@@ -64,8 +63,7 @@ void UI::print_balance(GameData *d, int value) {
 }
 
 void UI::print_middle(GameData *d, std::string str) {
-	// Clears 30 characters from the middle of the status bar.
-	mvprintw(d->mY-1, (d->mX/2)-15, "                              ");
+	UI::clear_middle(d);
 	mvprintw(d->mY-1, (d->mX/2) - (str.size()/2), str.c_str());
 }
 
@@ -77,6 +75,14 @@ void UI::clear_middle(GameData *d) {
 void UI::clear_notification(GameData *d) {
 	// Clear any previous message displayed on the notification tab.
 	mvprintw(d->mY-1, d->mX-20, "                    ");
+}
+
+void UI::clear_dice_board(GameData *d) {
+	for(int i = d->mY/2+1; i < d->mY-2; i++) {
+		for(int j = 0; j < d->mX; j++) {
+			mvprintw(i, j, " ");
+		}
+	}
 }
 
 void UI::notification(GameData *d, std::string str) {
@@ -114,8 +120,8 @@ void UI::print_layout(GameData *d, PlayerData *p) {
 	// "BALANCE:" string.
 	mvprintw(d->mY-1, d->command_str.size() + 12, d->balance_str.c_str());
 
-	// Sub-window information tags.
+	// Window specific information tags.
 	mvprintw(0, 1, "[r] roulette");
 	mvprintw(0, d->mX/2+2, "[s] slots");
-	mvprintw(d->mY/2, 1, "[c] casino");
+	mvprintw(d->mY/2, 1, "[d] dice");
 }

@@ -16,13 +16,13 @@ private:
 	int m_square_max_length;
 	int m_current_choice;
 	int m_current_bet;
-	void changeOption(int[]);
+	void change_option(int[]);
 	void spin(int, int);
 	void print();
-	void end_game(PlayerData*);
+	void end_game();
 
 public:
-	Roulette(const Game &g);
+	Roulette(const Game &g) : Game(g) {}
 	void init();
 	void start_game();
 };
