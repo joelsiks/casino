@@ -1,7 +1,7 @@
 
 # Dr. Joel Casino
 
-![Casino for life. rite?](https://raw.githubusercontent.com/joelsmithz/DuckyToC/casino/game.png "Dr. Joel Casino")
+![Casino for life. rite?](https://github.com/joelsmithz/casino/blob/master/game.png "Dr. Joel Casino)
 
 ## Building from source
 
